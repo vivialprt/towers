@@ -1,12 +1,14 @@
 """Containes class for towers' state tracking.
-Level refers to a single layer of a single tower;
-Tower refers to a stack of layers;
-Width refers to a layer width;
-Height refers to a count of layers in tower;
-Max level refers to a maximum count of layers in all towers,
-i.e. count of layers in game.
+Block refers to a single part of a single tower;
+Tower refers to a stack of blocks;
+Width refers to a block width;
+Height refers to a count of blocks in a tower;
+Max level refers to a maximum count of blocks in all towers,
 """
-from typing import List
+from typing import List, Optional
+
+
+Matrix = List[List[int]]
 
 
 class State:
@@ -17,15 +19,15 @@ class State:
     def __init__(
             self,
             max_level: int = 3,
-            state_matrix: List[List[int]] = None,
+            state_matrix: Matrix = None,
             solved: bool = False
         ):
         """Create state of tower
         :param max_level: count of blocks of tower
         :param state_matrix: max_level * _TOWERS_COUNT matrix with size of blocks
-        if now specified, matrix will be created using max_level value
+            if now specified, matrix will be created using max_level value
         :param solved: if True matrix and no state_matrix sqeified,
-        state_matrix will be creted as already solved
+            state_matrix will be creted as already solved
         """
         assert max_level > 0, f'Illegal number of levels ({max_level})'
         self._max_level = max_level
@@ -65,24 +67,48 @@ class State:
         output += '=' * tower_space * State._TOWERS_COUNT
         return output
 
+    @staticmethod
+    def _transpose(matrix: Matrix) -> Matrix:
+        """Transpose matrix. Intended to use in self.move
+        :param matrix: matrix to be transposed (intentionally state_matrix)
+        :return: transposed matrix
+        """
+        return [list(col) for col in zip(*matrix)]
+
+    @staticmethod
+    def _first_nonzero(array: List[int]) -> Optional[int]:
+        """Returns index of first nonzero element in array
+        :param array: target array
+        :return: index or None if all elements are zero
+        """
+        for idx, value in enumerate(array):
+            if value:
+                return idx
+
     def move(self, src: int, dst: int) -> None:
         """Moves top level from src to dst
-        :param src: where to pick from
-        :param dst: where to place at
+        :param src: index of source column
+        :param dst: index of destination column
         """
-        pass
+        columns = self._transpose(self._state_matrix)
+        src_top = self._first_nonzero(columns[src])
+        dst_top = self._first_nonzero(columns[dst])
+        if src_top is None:
+            raise RuntimeError('Source is empty')
+        if dst_top and columns[src][src_top] > columns[dst][dst_top]:
+            raise RuntimeError('Wrong move')
+        if dst_top is None:
+            dst_top = len(columns[dst])
+        columns[dst][dst_top - 1] = columns[src][src_top]  # move block on top of dst
+        columns[src][src_top] = 0  # remove block from top of src
+        self._state_matrix = self._transpose(columns)
+
 
 def main():
-    obj1 = State()
-    print(obj1)
-    print(State(solved=True))
-    print(State(max_level=5))
-    print(State(
-        max_level=3,
-        state_matrix=[
-            [0, 0, 0],
-            [1, 0, 0],
-            [3, 2, 0]]))
+    state = State(max_level=5)
+    print(state)
+    state.move(0, 1)
+    print(state)
 
 
 if __name__ == '__main__':
