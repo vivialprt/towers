@@ -49,6 +49,10 @@ class State:
                     level.append(row + 1 if col == tower_idx else 0)
                 self._state_matrix.append(level)
                 
+    @property
+    def state_matrix(self):
+        return self._state_matrix
+
     def __str__(self):
         """State representation
         Sample output for State():
@@ -66,6 +70,9 @@ class State:
             output += '\n'
         output += '=' * tower_space * State._TOWERS_COUNT
         return output
+
+    def __eq__(self, right) -> bool:
+        return self._state_matrix == right.state_matrix
 
     @staticmethod
     def _transpose(matrix: Matrix) -> Matrix:
@@ -108,6 +115,8 @@ def main():
     state = State(max_level=5)
     print(state)
     state.move(0, 1)
+    state.move(0, 2)
+    state.move(1, 2)
     print(state)
 
 
