@@ -1,9 +1,8 @@
-"""Containes class for towers' state tracking.
+"""Contains class for towers' state tracking.
 Block refers to a single part of a single tower;
 Tower refers to a stack of blocks;
 Width refers to a block width;
-Height refers to a count of blocks in a tower;
-Max level refers to a maximum count of blocks in all towers,
+Height refers to a maximum count of blocks in all towers,
 """
 from typing import List, Optional
 
@@ -18,32 +17,32 @@ class State:
 
     def __init__(
             self,
-            max_level: int = 3,
+            height: int = 1,
             state_matrix: Matrix = None,
             solved: bool = False
         ):
         """Create state of tower
-        :param max_level: count of blocks of tower
-        :param state_matrix: max_level * _TOWERS_COUNT matrix with size of blocks
-            if now specified, matrix will be created using max_level value
-        :param solved: if True matrix and no state_matrix sqeified,
-            state_matrix will be creted as already solved
+        :param height: count of blocks of tower
+        :param state_matrix: height * _TOWERS_COUNT matrix with size of blocks
+            if now specified, matrix will be created using height value
+        :param solved: if True matrix and no state_matrix specified,
+            state_matrix will be created as already solved
         """
-        assert max_level > 0, f'Illegal number of levels ({max_level})'
-        self._max_level = max_level
+        assert height > 0, f'Illegal number of levels ({height})'
+        self._height = height
         if state_matrix is not None:
             blocks = set(item for row in state_matrix for item in row)
-            assert blocks == set(range(self._max_level + 1)), \
+            assert blocks == set(range(self._height + 1)), \
                 f'Invalid state matrix: {state_matrix}'  # set of blocks inconsistent
             assert all(list(col) == sorted(col) for col in zip(*state_matrix)), \
                 f'Invalid state matrix: {state_matrix}'  # matrix is not sorted vertically
-            assert sum(1 for row in state_matrix for item in row if item) == self._max_level, \
+            assert sum(1 for row in state_matrix for item in row if item) == self._height, \
                 f'Invalid state matrix: {state_matrix}'  # count of blocks inconsistent
             self._state_matrix = state_matrix
         else:  # build state with one tower
             tower_idx = State._TOWERS_COUNT - 1 if solved else 0  # if solved populate last tower
             self._state_matrix = []
-            for row in range(self._max_level):
+            for row in range(self._height):
                 level = []
                 for col in range(State._TOWERS_COUNT):
                     level.append(row + 1 if col == tower_idx else 0)
@@ -52,6 +51,10 @@ class State:
     @property
     def state_matrix(self):
         return self._state_matrix
+
+    @property
+    def height(self):
+        return self._height
 
     def __str__(self):
         """State representation
@@ -62,7 +65,7 @@ class State:
         =================================
         """
         output = ''
-        tower_space = State._TOWERS_MARGIN + self._max_level * 2 + 4
+        tower_space = State._TOWERS_MARGIN + self._height * 2 + 4
         for row in self._state_matrix:
             for block in row:
                 layer = f'[{" "*block}||{" "*block}]' if block else '||'
@@ -92,7 +95,7 @@ class State:
             if value:
                 return idx
 
-    def move(self, src: int, dst: int) -> None:
+    def move(self, src: int, dst: int) -> 'State':
         """Moves top level from src to dst
         :param src: index of source column
         :param dst: index of destination column
@@ -109,10 +112,11 @@ class State:
         columns[dst][dst_top - 1] = columns[src][src_top]  # move block on top of dst
         columns[src][src_top] = 0  # remove block from top of src
         self._state_matrix = self._transpose(columns)
+        return self
 
 
 def main():
-    state = State(max_level=5)
+    state = State(height=5)
     print(state)
     state.move(0, 1)
     state.move(0, 2)
